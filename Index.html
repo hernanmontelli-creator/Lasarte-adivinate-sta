@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>¿Cuánto Sale? — El Juego del DIA</title>
+<link href="https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #cc0000;
+    --red2: #e60000;
+    --yellow: #ffd200;
+    --green: #009944;
+    --white: #fffef5;
+    --offwhite: #f4f1ea;
+    --card-bg: #ffffff;
+    --dark: #1a1a1a;
+    --muted: #888;
+    --shadow: 0 4px 0 rgba(0,0,0,0.18);
+    --shadow-lg: 0 7px 0 rgba(0,0,0,0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--offwhite);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  /* DIA-style top bar */
+  .topbar {
+    width: 100%;
+    background: var(--red);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+  }
+  .topbar-inner {
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+  }
+  .dia-logo {
+    font-family: 'Righteous', cursive;
+    font-size: 28px;
+    color: #fff;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+  }
+  .dia-logo span {
+    background: var(--yellow);
+    color: var(--red);
+    padding: 0 6px;
+    border-radius: 4px;
+    font-size: 26px;
+  }
+  .dia-tagline {
+    font-size: 11px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: right;
+    line-height: 1.3;
+  }
+
+  /* Yellow stripe */
+  .stripe {
+    width: 100%;
+    height: 6px;
+    background: var(--yellow);
+  }
+
+  /* SCREENS */
+  .screen { display: none; width: 100%; max-width: 440px; padding: 16px; }
+  .screen.active { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+  /* START */
+  .hero {
+    width: 100%;
+    background: var(--red);
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(45deg, rgba(255,255,255,0.04) 0, rgba(255,255,255,0.04) 10px, transparent 10px, transparent 20px);
+  }
+  .hero-title {
+    font-family: 'Righteous', cursive;
+    font-size: 50px;
+    color: #fff;
+    line-height: 0.95;
+    text-shadow: 3px 3px 0 rgba(0,0,0,0.25);
+    position: relative; z-index:1;
+  }
+  .hero-title em {
+    font-style: normal;
+    color: var(--yellow);
+  }
+  .hero-sub {
+    font-size: 13px;
+    color: rgba(255,255,255,0.85);
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 8px;
+    position: relative; z-index:1;
+  }
+
+  .info-card {
+    width: 100%;
+    background: var(--card-bg);
+    border: 3px solid var(--dark);
+    border-radius: 14px;
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+  }
+  .info-card h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--red);
+    font-weight: 900;
+    margin-bottom: 8px;
+  }
+  .info-card p { font-size: 14px; color: #444; line-height: 1.6; font-weight: 600; }
+
+  .btn-play {
+    width: 100%;
+    background: var(--green);
+    color: #fff;
+    border: 3px solid var(--dark);
+    border-radius: 12px;
+    padding: 18px;
+    font-family: 'Righteous', cursive;
+    font-size: 22px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-play:hover { transform: translateY(-2px); }
+  .btn-play:active { transform: translateY(4px); box-shadow: none; }
+
+  .hs-pill {
+    background: var(--card-bg);
+    border: 3px solid var(--dark);
+    border-radius: 30px;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow: var(--shadow);
+  }
+  .hs-pill span { color: var(--red); font-family: 'Righteous', cursive; font-size: 18px; }
+
+  /* HUD */
+  .hud {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+  }
+  .hud-box {
+    flex: 1;
+    background: var(--card-bg);
+    border: 3px solid var(--dark);
+    border-radius: 12px;
+    padding: 8px 10px;
+    text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .hud-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #999; font-weight: 800; }
+  .hud-value { font-family: 'Righteous', cursive; font-size: 26px; line-height: 1.1; color: var(--dark); }
+  .hud-box.lives .hud-value { color: var(--red); font-size: 20px; }
+  .hud-box.score .hud-value { color: var(--red); }
+  .hud-box.record .hud-value { color: var(--green); font-size: 20px; }
+
+  /* PROGRESS */
+  .progress-track {
+    width: 100%;
+    height: 8px;
+    background: #ddd;
+    border-radius: 4px;
+    border: 2px solid var(--dark);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green), #00cc55);
+    transition: width 0.5s ease;
+  }
+
+  /* PRODUCT CARD */
+  .product-card {
+    width: 100%;
+    background: var(--card-bg);
+    border: 3px solid var(--dark);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    animation: cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes cardIn {
+    from { opacity:0; transform: scale(0.88) translateY(16px); }
+    to { opacity:1; transform: scale(1) translateY(0); }
+  }
+
+  .card-header {
+    background: var(--red);
+    padding: 18px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .card-emoji {
+    font-size: 60px;
+    line-height: 1;
+    filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.2));
+  }
+  .card-meta { flex: 1; }
+  .card-cat {
+    display: inline-block;
+    background: var(--yellow);
+    color: var(--dark);
+    font-size: 10px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 5px;
+    border: 2px solid rgba(0,0,0,0.1);
+  }
+  .card-name {
+    font-family: 'Righteous', cursive;
+    font-size: 21px;
+    color: #fff;
+    line-height: 1.1;
+    text-shadow: 1px 2px 0 rgba(0,0,0,0.25);
+  }
+  .card-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.78);
+    margin-top: 3px;
+    font-weight: 600;
+  }
+
+  .card-body { padding: 16px 20px; }
+
+  .q-label {
+    font-size: 12px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #999;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .q-label::before, .q-label::after {
+    content: '';
+    flex: 1;
+    height: 2px;
+    background: var(--offwhite);
+    border-radius: 1px;
+  }
+
+  /* INPUT */
+  .input-wrap {
+    display: flex;
+    border: 3px solid var(--dark);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .peso-sign {
+    background: var(--yellow);
+    color: var(--dark);
+    font-family: 'Righteous', cursive;
+    font-size: 26px;
+    padding: 0 14px;
+    display: flex;
+    align-items: center;
+    border-right: 3px solid var(--dark);
+    min-width: 48px;
+    justify-content: center;
+  }
+  .price-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-family: 'Righteous', cursive;
+    font-size: 30px;
+    padding: 12px 12px;
+    color: var(--dark);
+    background: #fff;
+    width: 0;
+  }
+  .price-input::placeholder { color: #ccc; }
+  .btn-check {
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-left: 3px solid var(--dark);
+    font-family: 'Righteous', cursive;
+    font-size: 16px;
+    padding: 0 18px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.15s;
+    white-space: nowrap;
+  }
+  .btn-check:hover { background: var(--red2); }
+  .btn-check:disabled { background: #bbb; cursor: not-allowed; }
+
+  .tolerance-note {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 700;
+    margin-top: 8px;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+
+  /* FEEDBACK */
+  .feedback-panel {
+    width: 100%;
+    border: 3px solid var(--dark);
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: var(--shadow);
+    display: none;
+    animation: popIn 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes popIn {
+    from { opacity:0; transform: scale(0.8); }
+    to { opacity:1; transform: scale(1); }
+  }
+  .feedback-panel.correct { background: #edf9f3; }
+  .feedback-panel.wrong { background: #fff0f0; }
+
+  .fb-row { display: flex; align-items: flex-start; gap: 12px; }
+  .fb-icon { font-size: 38px; line-height: 1; }
+  .fb-text { flex: 1; }
+  .fb-title {
+    font-family: 'Righteous', cursive;
+    font-size: 22px;
+    line-height: 1.1;
+  }
+  .feedback-panel.correct .fb-title { color: var(--green); }
+  .feedback-panel.wrong .fb-title { color: var(--red); }
+  .fb-detail { font-size: 13px; color: #555; font-weight: 700; margin-top: 3px; }
+  .fb-pct { font-size: 12px; color: #888; font-weight: 600; margin-top: 2px; }
+
+  /* NEXT BTN */
+  .btn-next {
+    width: 100%;
+    background: var(--yellow);
+    color: var(--dark);
+    border: 3px solid var(--dark);
+    border-radius: 12px;
+    padding: 15px;
+    font-family: 'Righteous', cursive;
+    font-size: 18px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    display: none;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-next.visible { display: block; animation: popIn 0.3s ease; }
+  .btn-next:active { transform: translateY(3px); box-shadow: none; }
+
+  /* STREAK */
+  .streak-banner {
+    width: 100%;
+    background: var(--yellow);
+    border: 3px solid var(--dark);
+    border-radius: 10px;
+    padding: 9px 16px;
+    font-family: 'Righteous', cursive;
+    font-size: 17px;
+    color: var(--dark);
+    text-align: center;
+    box-shadow: var(--shadow);
+    display: none;
+    letter-spacing: 1px;
+  }
+  .streak-banner.visible { display: block; animation: popIn 0.3s ease; }
+
+  /* GAME OVER */
+  .go-card {
+    width: 100%;
+    background: var(--card-bg);
+    border: 3px solid var(--dark);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+  }
+  .go-header {
+    background: var(--red);
+    padding: 22px;
+    text-align: center;
+  }
+  .go-emoji { font-size: 52px; }
+  .go-title {
+    font-family: 'Righteous', cursive;
+    font-size: 36px;
+    color: #fff;
+    text-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+    line-height: 1;
+    margin-top: 6px;
+  }
+  .go-body { padding: 22px; text-align: center; }
+  .go-score {
+    font-family: 'Righteous', cursive;
+    font-size: 78px;
+    color: var(--red);
+    line-height: 1;
+  }
+  .go-score-label {
+    font-size: 12px;
+    color: #999;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+  .go-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 12px 0;
+  }
+  .go-stat {
+    background: var(--offwhite);
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .go-stat-val {
+    font-family: 'Righteous', cursive;
+    font-size: 26px;
+    color: var(--dark);
+  }
+  .go-stat-label { font-size: 10px; color: #999; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+
+  .record-badge {
+    background: var(--green);
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-family: 'Righteous', cursive;
+    font-size: 18px;
+    letter-spacing: 1px;
+    display: none;
+    margin-bottom: 10px;
+  }
+  .record-badge.show { display: block; animation: popIn 0.4s ease; }
+
+  .btn-secondary {
+    width: 100%;
+    background: var(--card-bg);
+    color: var(--dark);
+    border: 3px solid var(--dark);
+    border-radius: 10px;
+    padding: 13px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: transform 0.1s;
+  }
+  .btn-secondary:active { transform: translateY(2px); box-shadow: none; }
+
+  /* Shake */
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+  }
+  .shake { animation: shake 0.35s ease; }
+
+  /* Confetti */
+  @keyframes confettiFall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity:1; }
+    100% { transform: translateY(100vh) rotate(540deg); opacity:0; }
+  }
+  .confetti { position: fixed; pointer-events: none; z-index:999; border-radius:2px; animation: confettiFall linear forwards; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="dia-logo"><span>dia</span> 🛒</div>
+    <div class="dia-tagline">EL JUEGO DEL<br>SUPERMERCADO</div>
+  </div>
+  <div class="stripe"></div>
+</div>
+
+<!-- SCREEN: START -->
+<div class="screen active" id="screenStart">
+  <div class="hero">
+    <div class="hero-title">¿CUÁNTO<br><em>SALE?</em></div>
+    <div class="hero-sub">El quiz de precios argentinos</div>
+  </div>
+
+  <div class="info-card">
+    <h3>¿Cómo se juega?</h3>
+    <p>Aparece un producto del super y <strong>escribís el precio</strong> en pesos. Si te acercás ±20% al precio real, ¡sumás un punto! Tenés 3 vidas. ¡Veamos si sabés lo que cuesta la canasta!</p>
+  </div>
+
+  <button class="btn-play" onclick="startGame()">🛒 ¡EMPEZAR!</button>
+  <div class="hs-pill" id="startHS">Tu récord: <span id="startHSVal">0</span> pts</div>
+</div>
+
+<!-- SCREEN: GAME -->
+<div class="screen" id="screenGame">
+
+  <div class="hud">
+    <div class="hud-box lives">
+      <div class="hud-label">Vidas</div>
+      <div class="hud-value" id="livesVal">❤️❤️❤️</div>
+    </div>
+    <div class="hud-box score">
+      <div class="hud-label">Puntos</div>
+      <div class="hud-value" id="scoreVal">0</div>
+    </div>
+    <div class="hud-box record">
+      <div class="hud-label">Récord</div>
+      <div class="hud-value" id="recordVal">0</div>
+    </div>
+  </div>
+
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+
+  <div class="streak-banner" id="streakBanner">🔥 ¡Racha!</div>
+
+  <div class="product-card" id="productCard">
+    <div class="card-header">
+      <div class="card-emoji" id="pEmoji">🥛</div>
+      <div class="card-meta">
+        <div class="card-cat" id="pCat">Categoría</div>
+        <div class="card-name" id="pName">Producto</div>
+        <div class="card-desc" id="pDesc">Descripción</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="q-label">¿Cuánto sale?</div>
+      <div class="input-wrap" id="inputWrap">
+        <div class="peso-sign">$</div>
+        <input class="price-input" id="priceInput" type="number" min="0" placeholder="0"
+          onkeydown="if(event.key==='Enter') checkPrice()">
+        <button class="btn-check" id="btnCheck" onclick="checkPrice()">✓ OK</button>
+      </div>
+      <div class="tolerance-note">±20% del precio real se considera correcto</div>
+    </div>
+  </div>
+
+  <div class="feedback-panel" id="feedbackPanel">
+    <div class="fb-row">
+      <div class="fb-icon" id="fbIcon">✅</div>
+      <div class="fb-text">
+        <div class="fb-title" id="fbTitle">¡Correcto!</div>
+        <div class="fb-detail" id="fbDetail">—</div>
+        <div class="fb-pct" id="fbPct">—</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-next" id="btnNext" onclick="nextProduct()">SIGUIENTE ➜</button>
+
+</div>
+
+<!-- SCREEN: GAME OVER -->
+<div class="screen" id="screenOver">
+
+  <div class="go-card">
+    <div class="go-header">
+      <div class="go-emoji">🛒</div>
+      <div class="go-title">FIN DEL JUEGO</div>
+    </div>
+    <div class="go-body">
+      <div class="record-badge" id="recordBadge">🏆 ¡NUEVO RÉCORD!</div>
+      <div class="go-score" id="goScore">0</div>
+      <div class="go-score-label">puntos</div>
+
+      <div class="go-stats">
+        <div class="go-stat">
+          <div class="go-stat-val" id="goCorrect">0</div>
+          <div class="go-stat-label">✅ Correctos</div>
+        </div>
+        <div class="go-stat">
+          <div class="go-stat-val" id="goWrong">0</div>
+          <div class="go-stat-label">❌ Fallados</div>
+        </div>
+        <div class="go-stat">
+          <div class="go-stat-val" id="goBest">0</div>
+          <div class="go-stat-label">🔥 Mejor racha</div>
+        </div>
+        <div class="go-stat">
+          <div class="go-stat-val" id="goRecord">0</div>
+          <div class="go-stat-label">🏆 Récord</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-play" onclick="startGame()">↺ JUGAR DE NUEVO</button>
+  <button class="btn-secondary" onclick="showScreen('screenStart')">MENÚ PRINCIPAL</button>
+
+</div>
+
+<script>
+// Precios en pesos argentinos — basados en relevamientos reales de DIA Argentina 2025-2026
+// Fuentes: iProfesional (sep 2025), 365Ofertas catálogo DIA (mar 2026), Tiendeo AR
+const PRODUCTS = [
+  // Almacén / básicos
+  { name:"Arroz Gallo Oro 1 kg", desc:"Arroz blanco largo fino, bolsa", emoji:"🍚", cat:"Almacén", price:2500 },
+  { name:"Fideos Matarazzo Tallarín 500g", desc:"Fideos al huevo, paquete", emoji:"🍝", cat:"Almacén", price:1750 },
+  { name:"Aceite Cañuelas 900ml", desc:"Aceite de girasol, botella", emoji:"🫙", cat:"Aceites", price:2850 },
+  { name:"Yerba Mañanita 1 kg", desc:"Yerba mate compuesta, paquete", emoji:"🧉", cat:"Yerba & Café", price:4542 },
+  { name:"Café Nescafé Dolca 170g", desc:"Café instantáneo, frasco vidrio", emoji:"☕", cat:"Yerba & Café", price:9554 },
+  { name:"Azúcar La Merced 1 kg", desc:"Azúcar blanco refinado, paquete", emoji:"🍬", cat:"Almacén", price:1800 },
+  { name:"Harina 000 Favorita 1 kg", desc:"Harina de trigo 000, paquete", emoji:"🌾", cat:"Almacén", price:1500 },
+  { name:"Sal Celusal 1 kg", desc:"Sal fina yodada, caja", emoji:"🧂", cat:"Almacén", price:950 },
+  { name:"Puré de tomate Arcor 520g", desc:"Puré de tomate, tetra pack", emoji:"🍅", cat:"Almacén", price:1900 },
+  { name:"Lentejas La Paulista 500g", desc:"Lentejas, paquete celofán", emoji:"🫘", cat:"Almacén", price:2200 },
+
+  // Galletitas y panadería
+  { name:"Galletitas Oreo 108g", desc:"Galletitas rellenas de vainilla", emoji:"🍪", cat:"Galletitas", price:1650 },
+  { name:"Galletitas Criollitas 160g", desc:"Galletitas de agua clásicas", emoji:"🫓", cat:"Galletitas", price:1200 },
+  { name:"Pan Lactal Blanco Rey Oro", desc:"Pan de molde blanco, 580g", emoji:"🍞", cat:"Panadería", price:2065 },
+  { name:"Pan para Panchos/Choripán 10u", desc:"Pan de pancho, bolsa", emoji:"🌭", cat:"Panadería", price:1580 },
+  { name:"Facturas (Mignon) 35g", desc:"Factura de panadería individual", emoji:"🥐", cat:"Panadería", price:100 },
+
+  // Lácteos
+  { name:"Leche La Serenísima 1L", desc:"Leche entera larga vida, tetra", emoji:"🥛", cat:"Lácteos", price:1350 },
+  { name:"Yogur Ser 190g", desc:"Yogur firme descremado individual", emoji:"🍶", cat:"Lácteos", price:950 },
+  { name:"Queso Cremoso La Serenísima 400g", desc:"Queso cremoso, horma rectangular", emoji:"🧀", cat:"Lácteos", price:5200 },
+  { name:"Manteca La Serenísima 200g", desc:"Manteca con sal, paquete", emoji:"🧈", cat:"Lácteos", price:2800 },
+  { name:"Dulce de Leche Ilolay 400g", desc:"Dulce de leche repostero, pote", emoji:"🍮", cat:"Lácteos", price:3800 },
+  { name:"Crema de leche Ilolay 200ml", desc:"Crema de leche larga vida", emoji:"🥣", cat:"Lácteos", price:2100 },
+
+  // Bebidas
+  { name:"Coca-Cola 1.75L", desc:"Gaseosa sabor cola, botella PET", emoji:"🥤", cat:"Bebidas", price:3800 },
+  { name:"Cunnington Cola 2.25L", desc:"Gaseosa cola marca propia DIA", emoji:"🥤", cat:"Bebidas", price:1950 },
+  { name:"Agua La Tranquera 2L", desc:"Agua mineral sin gas, botella", emoji:"💧", cat:"Bebidas", price:900 },
+  { name:"Jugo Cepita del Valle 1L", desc:"Jugo de naranja, tetra pack", emoji:"🍊", cat:"Bebidas", price:2800 },
+  { name:"Cerveza Quilmes 710ml", desc:"Cerveza rubia clásica, botella", emoji:"🍺", cat:"Bebidas", price:7350 },
+  { name:"Cerveza Schneider 1L", desc:"Cerveza rubia lata", emoji:"🍺", cat:"Bebidas", price:3500 },
+
+  // Frescos
+  { name:"Huevos (docena)", desc:"Huevos blancos tamaño grande", emoji:"🥚", cat:"Frescos", price:3900 },
+  { name:"Palta el kg", desc:"Palta has por kilo", emoji:"🥑", cat:"Frescos", price:1190 },
+  { name:"Manzana x kg", desc:"Manzana roja o verde, por kilo", emoji:"🍎", cat:"Frescos", price:2990 },
+  { name:"Uvas x kg", desc:"Uvas frescas, por kilo", emoji:"🍇", cat:"Frescos", price:1990 },
+  { name:"Pera x kg", desc:"Pera Williams, por kilo", emoji:"🍐", cat:"Frescos", price:3290 },
+
+  // Fiambres y carnes
+  { name:"Jamón cocido Swift 200g", desc:"Jamón cocido en fetas, paquete", emoji:"🥩", cat:"Fiambres", price:3200 },
+  { name:"Salchicha Frankfurt Vienna 500g", desc:"Salchichas tipo frankfurt, paquete", emoji:"🌭", cat:"Fiambres", price:3800 },
+  { name:"Hamburguesa Pescetto 240g x2", desc:"Hamburguesas de res, 2 unidades", emoji:"🍔", cat:"Fiambres", price:2200 },
+
+  // Limpieza e higiene
+  { name:"Jabón Lux 3x90g", desc:"Jabón tocador pack x3 unidades", emoji:"🧼", cat:"Higiene", price:2100 },
+  { name:"Shampoo Pantene 400ml", desc:"Shampoo rizos definidos o liso", emoji:"🧴", cat:"Higiene", price:5800 },
+  { name:"Papel Higiénico Suavex 6u", desc:"Papel triple hoja, pack 6 rollos", emoji:"🧻", cat:"Hogar", price:4800 },
+  { name:"Detergente Cif 500ml", desc:"Detergente lavavajillas limón", emoji:"🫧", cat:"Limpieza", price:2774 },
+  { name:"Lavandina Ayudín 1L", desc:"Lavandina clásica concentrada", emoji:"🧹", cat:"Limpieza", price:1400 },
+  { name:"Desodorante Rexona 90g", desc:"Desodorante stick hombre/mujer", emoji:"🌿", cat:"Higiene", price:3500 },
+  { name:"Pasta dental Colgate 90ml", desc:"Crema dental triple protección", emoji:"🪥", cat:"Higiene", price:2100 },
+
+  // Snacks y varios
+  { name:"Papas Lay's 120g", desc:"Papas fritas clásicas, bolsa", emoji:"🥔", cat:"Snacks", price:2800 },
+  { name:"Cacao Tang 1kg (x4 sobres)", desc:"Jugo en polvo tang 4 pack", emoji:"🧃", cat:"Almacén", price:1800 },
+  { name:"Postre La Serenísima 80g", desc:"Postre de chocolate individual", emoji:"🍮", cat:"Lácteos", price:800 },
+];
+
+const TOLERANCE = 0.20; // 20%
+let state = { highScore: 0 };
+
+function fmt(n) {
+  return "$" + Math.round(n).toLocaleString('es-AR');
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i>0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startGame() {
+  state = {
+    ...state,
+    lives: 3,
+    score: 0,
+    streak: 0,
+    bestStreak: 0,
+    correct: 0,
+    wrong: 0,
+    queue: shuffle(PRODUCTS),
+    qIdx: 0,
+    answered: false,
+  };
+  updateHUD();
+  loadProduct();
+  showScreen('screenGame');
+}
+
+function updateHUD() {
+  document.getElementById('livesVal').textContent = ['❤️','❤️','❤️'].map((_,i)=> i<state.lives?'❤️':'🖤').join('');
+  document.getElementById('scoreVal').textContent = state.score;
+  document.getElementById('recordVal').textContent = state.highScore;
+
+  const pct = Math.min((state.score/25)*100, 100);
+  document.getElementById('progressFill').style.width = pct+'%';
+
+  const sb = document.getElementById('streakBanner');
+  if (state.streak >= 3) {
+    sb.textContent = `🔥 ¡Racha de ${state.streak}!`;
+    sb.classList.add('visible');
+  } else {
+    sb.classList.remove('visible');
+  }
+}
+
+function loadProduct() {
+  if (state.qIdx >= state.queue.length) {
+    state.queue = shuffle(PRODUCTS);
+    state.qIdx = 0;
+  }
+  const p = state.queue[state.qIdx];
+  state.current = p;
+  state.answered = false;
+
+  document.getElementById('pEmoji').textContent = p.emoji;
+  document.getElementById('pCat').textContent = p.cat;
+  document.getElementById('pName').textContent = p.name;
+  document.getElementById('pDesc').textContent = p.desc;
+  document.getElementById('priceInput').value = '';
+  document.getElementById('priceInput').disabled = false;
+  document.getElementById('btnCheck').disabled = false;
+  document.getElementById('feedbackPanel').style.display = 'none';
+  document.getElementById('feedbackPanel').className = 'feedback-panel';
+  document.getElementById('btnNext').classList.remove('visible');
+
+  const card = document.getElementById('productCard');
+  card.style.animation = 'none';
+  card.offsetHeight;
+  card.style.animation = 'cardIn 0.35s cubic-bezier(0.34,1.56,0.64,1)';
+
+  setTimeout(() => document.getElementById('priceInput').focus(), 400);
+}
+
+function checkPrice() {
+  if (state.answered) return;
+  const raw = parseFloat(document.getElementById('priceInput').value);
+  if (isNaN(raw) || raw <= 0) {
+    document.getElementById('inputWrap').classList.add('shake');
+    setTimeout(() => document.getElementById('inputWrap').classList.remove('shake'), 400);
+    return;
+  }
+
+  state.answered = true;
+  document.getElementById('priceInput').disabled = true;
+  document.getElementById('btnCheck').disabled = true;
+
+  const real = state.current.price;
+  const pct = Math.abs(raw - real) / real;
+  const correct = pct <= TOLERANCE;
+
+  const fp = document.getElementById('feedbackPanel');
+  fp.style.display = 'block';
+
+  if (correct) {
+    state.score++;
+    state.streak++;
+    state.correct++;
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    if (state.score > state.highScore) state.highScore = state.score;
+    document.getElementById('startHSVal').textContent = state.highScore;
+
+    fp.className = 'feedback-panel correct';
+    document.getElementById('fbIcon').textContent = pct < 0.05 ? '🎯' : '✅';
+    document.getElementById('fbTitle').textContent = pct < 0.05 ? '¡EXACTO!' : '¡CORRECTO!';
+    document.getElementById('fbDetail').textContent = `Pusiste ${fmt(raw)} — Real: ${fmt(real)}`;
+    document.getElementById('fbPct').textContent = `Diferencia: ${(pct*100).toFixed(1)}%`;
+
+    if (state.streak >= 3) spawnConfetti();
+  } else {
+    state.lives--;
+    state.wrong++;
+    state.streak = 0;
+
+    fp.className = 'feedback-panel wrong';
+    document.getElementById('fbIcon').textContent = '❌';
+    const dir = raw > real ? 'te pasaste 📈' : 'quedaste corto 📉';
+    document.getElementById('fbTitle').textContent = `Era ${fmt(real)}`;
+    document.getElementById('fbDetail').textContent = `Pusiste ${fmt(raw)} — ${dir}`;
+    document.getElementById('fbPct').textContent = `Diferencia: ${(pct*100).toFixed(1)}%`;
+  }
+
+  updateHUD();
+
+  if (state.lives <= 0) {
+    setTimeout(gameOver, 1500);
+    return;
+  }
+
+  document.getElementById('btnNext').classList.add('visible');
+}
+
+function nextProduct() {
+  state.qIdx++;
+  loadProduct();
+  updateHUD();
+}
+
+function gameOver() {
+  const isRecord = state.score > 0 && state.score >= state.highScore;
+  document.getElementById('goScore').textContent = state.score;
+  document.getElementById('goCorrect').textContent = state.correct;
+  document.getElementById('goWrong').textContent = state.wrong;
+  document.getElementById('goBest').textContent = state.bestStreak;
+  document.getElementById('goRecord').textContent = state.highScore;
+
+  const rb = document.getElementById('recordBadge');
+  rb.className = 'record-badge' + (isRecord ? ' show' : '');
+
+  showScreen('screenOver');
+  if (isRecord && state.score > 0) spawnConfetti(80);
+}
+
+function spawnConfetti(n=25) {
+  const colors = ['#cc0000','#ffd200','#009944','#fff','#ff6600','#0066cc'];
+  for (let i=0; i<n; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      const size = 7 + Math.random()*9;
+      el.style.cssText = `
+        left:${Math.random()*100}vw; top:-12px;
+        width:${size}px; height:${size}px;
+        background:${colors[Math.floor(Math.random()*colors.length)]};
+        border-radius:${Math.random()>0.5?'50%':'2px'};
+        animation-duration:${1.6+Math.random()*2}s;
+        animation-delay:${Math.random()*0.4}s;
+      `;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(), 3500);
+    }, i*28);
+  }
+}
+</script>
+</body>
+</html>
